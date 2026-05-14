@@ -1,12 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ─── Reset Streamlit chrome ─── */
-#MainMenu { visibility: hidden; }
-footer { visibility: hidden; }
-/* Hide header toolbar but KEEP the sidebar collapse/expand toggle */
-header { visibility: hidden; }
-[data-testid="stSidebarCollapsedControl"] { visibility: visible !important; }
-[data-testid="collapsedControl"] { visibility: visible !important; }
+#MainMenu { display: none !important; }
+footer { display: none !important; }
+/* Remove header completely — eliminates the blank space at the top */
+header[data-testid="stHeader"] { display: none !important; }
 .stDeployButton { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
@@ -40,7 +38,7 @@ section.main {
 
 /* ─── Main content padding ─── */
 .main .block-container {
-  padding-top: 2rem;
+  padding-top: 1.5rem;
   padding-bottom: 2rem;
   max-width: 1200px;
 }

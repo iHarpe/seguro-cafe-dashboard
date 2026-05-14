@@ -1,4 +1,12 @@
 import streamlit as st
+
+st.set_page_config(
+    page_title="Monitoreo Mensual — Seguro Cafetero",
+    page_icon="☕",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 import pandas as pd
 from components.sidebar import render_sidebar
 from utils.defaults import (

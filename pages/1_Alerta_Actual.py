@@ -1,4 +1,12 @@
 import streamlit as st
+
+st.set_page_config(
+    page_title="Evaluación de Riesgo Anual — Seguro Cafetero",
+    page_icon="☕",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 from components.sidebar import render_sidebar
 from utils.defaults import (
     VARIABLE_RANGES, TECHNICAL_VARIABLE_RANGES,
