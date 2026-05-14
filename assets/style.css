@@ -27,13 +27,27 @@ section.main {
   background-color: #FAFAF8 !important;
 }
 
-/* ─── Sidebar ─── */
+/* ─── Sidebar — always visible, never collapsible ─── */
 [data-testid="stSidebar"] {
   background-color: #FFFFFF !important;
   border-right: 1px solid #E2E8F0;
+  /* Force open regardless of localStorage collapsed state */
+  transform: none !important;
+  min-width: 21rem !important;
+  width: 21rem !important;
+  visibility: visible !important;
+  display: block !important;
 }
 [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
   padding: 1.5rem 1rem;
+}
+/* Hide the X button inside the sidebar (prevents user from collapsing it) */
+[data-testid="stSidebarCollapseButton"] {
+  display: none !important;
+}
+/* Hide the ">" expand button that appears when sidebar is collapsed */
+[data-testid="stSidebarCollapsedControl"] {
+  display: none !important;
 }
 
 /* ─── Main content padding ─── */

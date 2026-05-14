@@ -5,6 +5,8 @@ from utils.defaults import DEFAULT_DEPARTMENT, DEFAULT_YEAR, DEFAULT_MODE
 
 def render_sidebar() -> bool:
     """Render shared sidebar: navigation + config + API status. Returns api_ok."""
+    # Inject CSS into the main page first (before sidebar block) so the
+    # force-show sidebar rules take effect before Streamlit resolves layout.
     css_path = Path(__file__).parent.parent / "assets" / "style.css"
     if css_path.exists():
         st.markdown(
