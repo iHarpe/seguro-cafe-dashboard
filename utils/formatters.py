@@ -63,3 +63,13 @@ def basis_risk_label(real_loss: float | None, predicted: float | None) -> str:
         return "—"
     diff = real_loss - predicted
     return fmt_pp(diff)
+
+
+def level_from_api(nivel_alerta: str | None) -> str:
+    """Convert API nivel_alerta string to CSS class name."""
+    mapping = {
+        "NORMAL":    "normal",
+        "PRECAUCION": "caution",
+        "ALERTA":    "alert",
+    }
+    return mapping.get((nivel_alerta or "").upper(), "unknown")

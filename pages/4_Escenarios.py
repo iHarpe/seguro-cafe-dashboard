@@ -1,11 +1,6 @@
 import streamlit as st
 import pandas as pd
-from pathlib import Path
-
-css_path = Path(__file__).parent.parent / "assets" / "style.css"
-if css_path.exists():
-    st.markdown(f"<style>{css_path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
-
+from components.sidebar import render_sidebar
 from utils.defaults import (
     VARIABLE_RANGES, TECHNICAL_VARIABLE_RANGES,
     DEFAULT_DEPARTMENT, DEFAULT_YEAR,
@@ -16,6 +11,8 @@ from utils.validators import validate_annual_payload
 from components.charts import plot_tornado
 from components.metric_card import render_kpi_card
 from components.disclaimer import render_disclaimer
+
+render_sidebar()
 
 st.markdown('<div class="page-title">Análisis de Escenarios What-If</div>', unsafe_allow_html=True)
 st.markdown(
@@ -62,11 +59,16 @@ with results_col:
     st.markdown('<div class="section-label">Resultado del escenario</div>', unsafe_allow_html=True)
 
     if calculate:
+        # Always include all tech vars (defaults when not shown in basic mode)
+        full_inputs = dict(input_values)
+        for key in TECHNICAL_VARIABLE_RANGES:
+            if key not in full_inputs:
+                full_inputs[key] = float(TECHNICAL_VARIABLE_RANGES[key]["default"])
+
         payload = {
             "departamento": department,
-            "anio": year,
-            "es_risaralda": department == "Risaralda",
-            **input_values,
+            "anio": int(year),
+            **{k: float(v) for k, v in full_inputs.items()},
         }
 
         valid, err_msg = validate_annual_payload(payload)
@@ -82,20 +84,14 @@ with results_col:
 
                 # ─── Tornado: N+1 calls (+10% per variable) ─────────────────
                 with st.spinner("Calculando sensibilidad por variable..."):
-                    base_score = (
-                        result["data"].get("porcentaje_perdida_estimado")
-                        or result["data"].get("score_anual", 0)
-                    )
+                    base_score = result["data"].get("perdida_estimada_pct", 0) or 0
                     sensitivity_rows = []
                     for key, r in active_ranges.items():
-                        val_up = min(input_values[key] * 1.10, r["max"])
+                        val_up = min(full_inputs[key] * 1.10, r["max"])
                         payload_up = {**payload, key: val_up}
                         res_up = predict_annual(payload_up)
                         if res_up["ok"]:
-                            score_up = (
-                                res_up["data"].get("porcentaje_perdida_estimado")
-                                or res_up["data"].get("score_anual", 0)
-                            )
+                            score_up = res_up["data"].get("perdida_estimada_pct", 0) or 0
                             delta = score_up - base_score
                             sensitivity_rows.append({
                                 "variable_label": r["label"],
@@ -109,7 +105,7 @@ with results_col:
     scenario_result = st.session_state.get("scenario_result")
     if scenario_result and scenario_result.get("ok"):
         data = scenario_result["data"]
-        score = data.get("porcentaje_perdida_estimado") or data.get("score_anual")
+        score = data.get("perdida_estimada_pct")
         level = level_from_score(score)
 
         st.markdown(
@@ -125,10 +121,7 @@ with results_col:
         # Compare with last Pantalla 1 result
         prev_result = st.session_state.get("last_result")
         if prev_result and prev_result.get("ok"):
-            prev_score = (
-                prev_result["data"].get("porcentaje_perdida_estimado")
-                or prev_result["data"].get("score_anual")
-            )
+            prev_score = prev_result["data"].get("perdida_estimada_pct")
             if prev_score is not None and score is not None:
                 delta = score - prev_score
                 st.markdown(

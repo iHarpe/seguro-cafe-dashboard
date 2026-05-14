@@ -1,11 +1,6 @@
 import streamlit as st
 import pandas as pd
-from pathlib import Path
-
-css_path = Path(__file__).parent.parent / "assets" / "style.css"
-if css_path.exists():
-    st.markdown(f"<style>{css_path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
-
+from components.sidebar import render_sidebar
 from utils.defaults import (
     DEFAULT_DEPARTMENT, DEFAULT_YEAR,
     DETECTOR_THRESHOLD, TRIGGER_THRESHOLD, MODEL_MAE_MONTHLY_ANNUALIZED,
@@ -21,6 +16,8 @@ ALL_MONTHS = {
     1:"Enero",2:"Febrero",3:"Marzo",4:"Abril",5:"Mayo",6:"Junio",
     7:"Julio",8:"Agosto",9:"Septiembre",10:"Octubre",11:"Noviembre",12:"Diciembre",
 }
+
+render_sidebar()
 
 st.markdown('<div class="page-title">Monitoreo Mensual de Cosecha</div>', unsafe_allow_html=True)
 st.markdown(

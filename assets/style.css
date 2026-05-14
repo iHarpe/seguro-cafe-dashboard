@@ -3,7 +3,10 @@
 /* ─── Reset Streamlit chrome ─── */
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
+/* Hide header toolbar but KEEP the sidebar collapse/expand toggle */
 header { visibility: hidden; }
+[data-testid="stSidebarCollapsedControl"] { visibility: visible !important; }
+[data-testid="collapsedControl"] { visibility: visible !important; }
 .stDeployButton { display: none !important; }
 [data-testid="stToolbar"] { display: none !important; }
 [data-testid="stDecoration"] { display: none !important; }
@@ -15,9 +18,15 @@ html, body, [class*="css"] {
   color: #1E293B;
 }
 
-/* ─── App background ─── */
-.stApp {
-  background-color: #FAFAF8;
+/* ─── App background (aggressive targeting for Streamlit) ─── */
+body,
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"],
+.main,
+section.main {
+  background-color: #FAFAF8 !important;
 }
 
 /* ─── Sidebar ─── */
@@ -355,6 +364,240 @@ hr {
 /* Alert glow — static, not infinite pulse (infinite = only for loaders) */
 .semaphore-alert {
   box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.12), 0 0 20px rgba(220, 38, 38, 0.15);
+}
+
+/* ─── Home Hero ─── */
+.home-hero {
+  background: linear-gradient(135deg, #5C3D2E 0%, #3B2315 50%, #1E293B 100%);
+  border-radius: 12px;
+  padding: 40px 48px;
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.home-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  pointer-events: none;
+}
+.home-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: 30%;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.03);
+  pointer-events: none;
+}
+.home-hero-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #A78A71;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 4px 12px;
+  border-radius: 99px;
+  margin-bottom: 16px;
+}
+.home-hero-title {
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  color: #FFFFFF !important;
+  line-height: 1.25 !important;
+  margin: 0 0 12px 0 !important;
+  letter-spacing: -0.02em;
+}
+.home-hero-accent {
+  color: #D4A574;
+}
+.home-hero-subtitle {
+  font-size: 14px;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.6;
+  margin-bottom: 28px;
+  max-width: 600px;
+}
+.home-hero-subtitle strong {
+  color: rgba(255,255,255,0.85);
+}
+.home-hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+.home-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 24px 0 0;
+}
+.home-stat:first-child { padding-left: 0; }
+.home-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #FFFFFF;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.home-stat-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+.home-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255,255,255,0.12);
+  margin: 0 24px 0 0;
+}
+
+/* ─── Navigation Cards (visual top + page_link footer) ─── */
+.nav-card-visual {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  padding: 20px 20px 16px 20px;
+  margin-bottom: 0;
+}
+.nav-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.nav-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.nav-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E293B;
+  margin-bottom: 4px;
+}
+.nav-card-desc {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.nav-card-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.nav-tag {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748B;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* ─── Page link styled as card footer ─── */
+[data-testid="stPageLink"] {
+  margin-top: 0 !important;
+  margin-bottom: 16px !important;
+}
+[data-testid="stPageLink"] a {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-top: none !important;
+  border-radius: 0 0 10px 10px !important;
+  padding: 10px 20px !important;
+  color: #1E40AF !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  text-decoration: none !important;
+  transition: background-color 150ms var(--ease-out),
+              color 150ms var(--ease-out) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+[data-testid="stPageLink"] a::after {
+  content: '→';
+  margin-left: auto;
+  font-size: 14px;
+  transition: transform 150ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-testid="stPageLink"] a:hover {
+    background: #EFF6FF !important;
+    color: #1D3A9E !important;
+    text-decoration: none !important;
+  }
+  [data-testid="stPageLink"] a:hover::after {
+    transform: translateX(3px);
+  }
+}
+
+/* ─── Model strip ─── */
+.model-strip {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.model-strip-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94A3B8;
+  white-space: nowrap;
+}
+.model-strip-items {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  flex-wrap: wrap;
+}
+.model-item {
+  padding: 0 20px;
+  flex: 1;
+  min-width: 160px;
+}
+.model-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+}
+.model-item-meta {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+.model-strip-sep {
+  width: 1px;
+  height: 32px;
+  background: #E2E8F0;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,18 +1,15 @@
 import streamlit as st
 import pandas as pd
 import io
-from pathlib import Path
-
-css_path = Path(__file__).parent.parent / "assets" / "style.css"
-if css_path.exists():
-    st.markdown(f"<style>{css_path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
-
+from components.sidebar import render_sidebar
 from utils.defaults import DEFAULT_DEPARTMENT, TRIGGER_THRESHOLD, DETECTOR_THRESHOLD
 from utils.formatters import fmt_pct, fmt_pp, level_from_score
 from utils.api_client import get_history
 from components.charts import plot_historical_dual
 from components.metric_card import render_kpi_card
 from components.disclaimer import render_disclaimer
+
+render_sidebar()
 
 st.markdown('<div class="page-title">Análisis Histórico 2007–2024</div>', unsafe_allow_html=True)
 st.markdown(
