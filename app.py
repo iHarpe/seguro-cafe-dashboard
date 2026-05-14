@@ -26,13 +26,67 @@ if "last_result" not in st.session_state:
     st.session_state["last_result"] = None
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
+_SVG_HOME = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>'
+    '<polyline points="9 22 9 12 15 12 15 22"/></svg>'
+)
+_SVG_ALERT = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>'
+    '<line x1="12" y1="9" x2="12" y2="13"/>'
+    '<line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+)
+_SVG_CHART = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
+)
+_SVG_HIST = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<line x1="18" y1="20" x2="18" y2="10"/>'
+    '<line x1="12" y1="20" x2="12" y2="4"/>'
+    '<line x1="6" y1="20" x2="6" y2="14"/></svg>'
+)
+_SVG_SCEN = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<circle cx="12" cy="12" r="3"/>'
+    '<path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>'
+)
+_NAV_HTML = (
+    '<div class="sb-nav">'
+    f'<a href="/" target="_self" class="sb-nav-item">'
+    f'<span class="sb-nav-icon" style="color:#5C3D2E;background:#FDF6F0;">{_SVG_HOME}</span>'
+    '<span class="sb-nav-label">Inicio</span></a>'
+    f'<a href="/Alerta_Actual" target="_self" class="sb-nav-item">'
+    f'<span class="sb-nav-icon" style="color:#1E40AF;background:#EFF6FF;">{_SVG_ALERT}</span>'
+    '<span class="sb-nav-label">Evaluación de Riesgo Anual</span></a>'
+    f'<a href="/Monitoreo_Mensual" target="_self" class="sb-nav-item">'
+    f'<span class="sb-nav-icon" style="color:#16A34A;background:#F0FDF4;">{_SVG_CHART}</span>'
+    '<span class="sb-nav-label">Monitoreo Mensual</span></a>'
+    f'<a href="/Historico" target="_self" class="sb-nav-item">'
+    f'<span class="sb-nav-icon" style="color:#D97706;background:#FFF7ED;">{_SVG_HIST}</span>'
+    '<span class="sb-nav-label">Análisis Histórico</span></a>'
+    f'<a href="/Escenarios" target="_self" class="sb-nav-item">'
+    f'<span class="sb-nav-icon" style="color:#7C3AED;background:#F5F3FF;">{_SVG_SCEN}</span>'
+    '<span class="sb-nav-label">Escenarios What-If</span></a>'
+    '</div>'
+)
+
 with st.sidebar:
     st.markdown(
         '<div class="sidebar-brand">☕ Seguro Cafetero</div>',
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="section-label">Configuración</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Navegación</div>', unsafe_allow_html=True)
+    st.markdown(_NAV_HTML, unsafe_allow_html=True)
+
+    st.markdown('<div class="section-label" style="margin-top:16px;">Configuración</div>', unsafe_allow_html=True)
 
     st.selectbox(
         "Departamento",
@@ -77,11 +131,9 @@ with st.sidebar:
         )
         st.caption("Ejecuta: `uvicorn src.api.main:app --port 8000`")
 
-    st.markdown("---")
-    st.caption(
-        "Seguro Agrícola Indexado · PAAD 2026  \n"
-        "Maestría en Inteligencia Analítica de Datos  \n"
-        "Universidad de los Andes"
+    st.markdown(
+        '<div class="sidebar-footer">Seguro Agrícola Indexado · MIAD</div>',
+        unsafe_allow_html=True,
     )
 
 # ─── Home page ────────────────────────────────────────────────────────────────

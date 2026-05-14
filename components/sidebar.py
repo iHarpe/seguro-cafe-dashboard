@@ -2,11 +2,62 @@ import streamlit as st
 from pathlib import Path
 from utils.defaults import DEFAULT_DEPARTMENT, DEFAULT_YEAR, DEFAULT_MODE
 
+# SVG icons — same paths used in home page cards, resized to 16×16
+_SVG_HOME = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>'
+    '<polyline points="9 22 9 12 15 12 15 22"/></svg>'
+)
+_SVG_ALERT = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>'
+    '<line x1="12" y1="9" x2="12" y2="13"/>'
+    '<line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+)
+_SVG_CHART = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
+)
+_SVG_HIST = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<line x1="18" y1="20" x2="18" y2="10"/>'
+    '<line x1="12" y1="20" x2="12" y2="4"/>'
+    '<line x1="6" y1="20" x2="6" y2="14"/></svg>'
+)
+_SVG_SCEN = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<circle cx="12" cy="12" r="3"/>'
+    '<path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>'
+)
+
+_NAV_ITEMS = [
+    ("/",                  _SVG_HOME,  "#5C3D2E", "#FDF6F0", "Inicio"),
+    ("/Alerta_Actual",     _SVG_ALERT, "#1E40AF", "#EFF6FF", "Evaluación de Riesgo Anual"),
+    ("/Monitoreo_Mensual", _SVG_CHART, "#16A34A", "#F0FDF4", "Monitoreo Mensual"),
+    ("/Historico",         _SVG_HIST,  "#D97706", "#FFF7ED", "Análisis Histórico"),
+    ("/Escenarios",        _SVG_SCEN,  "#7C3AED", "#F5F3FF", "Escenarios What-If"),
+]
+
+
+def _nav_html() -> str:
+    items = []
+    for href, svg, color, bg, label in _NAV_ITEMS:
+        items.append(
+            f'<a href="{href}" target="_self" class="sb-nav-item">'
+            f'<span class="sb-nav-icon" style="color:{color};background:{bg};">{svg}</span>'
+            f'<span class="sb-nav-label">{label}</span>'
+            f'</a>'
+        )
+    return '<div class="sb-nav">' + "".join(items) + "</div>"
+
 
 def render_sidebar() -> bool:
     """Render shared sidebar: navigation + config + API status. Returns api_ok."""
-    # Inject CSS into the main page first (before sidebar block) so the
-    # force-show sidebar rules take effect before Streamlit resolves layout.
     css_path = Path(__file__).parent.parent / "assets" / "style.css"
     if css_path.exists():
         st.markdown(
@@ -14,7 +65,6 @@ def render_sidebar() -> bool:
             unsafe_allow_html=True,
         )
 
-    # Init session state keys before widgets create them
     if "department" not in st.session_state:
         st.session_state["department"] = DEFAULT_DEPARTMENT
     if "year" not in st.session_state:
@@ -33,11 +83,7 @@ def render_sidebar() -> bool:
             '<div class="section-label">Navegación</div>',
             unsafe_allow_html=True,
         )
-        st.page_link("app.py",                          label="Inicio",                      icon="🏠")
-        st.page_link("pages/1_Alerta_Actual.py",        label="Evaluación de Riesgo Anual",  icon="⚠️")
-        st.page_link("pages/2_Monitoreo_Mensual.py",    label="Monitoreo Mensual",           icon="📊")
-        st.page_link("pages/3_Historico.py",            label="Análisis Histórico",          icon="📈")
-        st.page_link("pages/4_Escenarios.py",           label="Escenarios What-If",          icon="🎛️")
+        st.markdown(_nav_html(), unsafe_allow_html=True)
 
         # ─── Config ───────────────────────────────────────────────────────────
         st.markdown(
@@ -90,10 +136,9 @@ def render_sidebar() -> bool:
             )
             st.caption("Ejecuta en otra terminal:  \n`uvicorn src.api.main:app --port 8000`")
 
-        st.markdown("---")
-        st.caption(
-            "Seguro Agrícola Indexado · PAAD 2026  \n"
-            "Universidad de los Andes"
+        st.markdown(
+            '<div class="sidebar-footer">Seguro Agrícola Indexado · MIAD</div>',
+            unsafe_allow_html=True,
         )
 
     return api_ok
