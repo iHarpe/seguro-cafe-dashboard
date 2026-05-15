@@ -10,18 +10,27 @@ st.set_page_config(
 import pandas as pd
 import io
 from components.sidebar import render_sidebar
-from utils.defaults import DEFAULT_DEPARTMENT, TRIGGER_THRESHOLD, DETECTOR_THRESHOLD
-from utils.formatters import fmt_pct, fmt_pp, level_from_score
+from utils.defaults import DEFAULT_DEPARTMENT, TRIGGER_THRESHOLD
+from utils.formatters import fmt_pct
 from utils.api_client import get_history
 from components.charts import plot_historical_dual
 from components.metric_card import render_kpi_card
-from components.disclaimer import render_disclaimer
 
 render_sidebar()
+st.markdown("""<style>:root {
+  --page-accent: #D97706;
+  --page-accent-light: #FFF7ED;
+  --page-accent-border: #FCD34D;
+}</style>""", unsafe_allow_html=True)
 
-st.markdown('<div class="page-title">Análisis Histórico 2007–2024</div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="page-header">
+  <div class="page-accent-bar"></div>
+  <div class="page-title">Análisis Histórico 2007–2024</div>
+</div>
+""", unsafe_allow_html=True)
 st.markdown(
-    '<div class="page-subtitle">Backtesting del seguro: cuándo habría pagado el mecanismo de trigger y cuál fue el basis risk promedio.</div>',
+    '<div class="page-subtitle">Backtesting del seguro: años en que la pérdida real de Agronet superó el umbral de trigger (−14%).</div>',
     unsafe_allow_html=True,
 )
 
@@ -43,7 +52,9 @@ if not history_result["ok"]:
     )
     st.stop()
 
-records = history_result.get("data", {}).get("registros", [])
+records = history_result.get("data", [])
+if isinstance(records, dict):
+    records = records.get("registros", [])
 
 if not records:
     st.warning("No hay datos históricos disponibles para este departamento.")
@@ -51,23 +62,18 @@ if not records:
 
 df = pd.DataFrame(records)
 
+# Normalise column names to what the rest of this page expects
+if "perdida_rendimiento_anual_pct" in df.columns and "perdida_real_pct" not in df.columns:
+    df = df.rename(columns={"perdida_rendimiento_anual_pct": "perdida_real_pct"})
+
 # ─── Summary metrics ──────────────────────────────────────────────────────────
 st.markdown('<div class="section-label">Resumen actuarial</div>', unsafe_allow_html=True)
 
 total = len(df)
 real_events = int((df["perdida_real_pct"] <= TRIGGER_THRESHOLD).sum()) if "perdida_real_pct" in df.columns else 0
-triggered = int((df["score_anual"] <= TRIGGER_THRESHOLD).sum()) if "score_anual" in df.columns else 0
-
-if "perdida_real_pct" in df.columns and "score_anual" in df.columns:
-    basis_vals = (df["perdida_real_pct"] - df["score_anual"]).abs()
-    basis_avg = float(basis_vals.mean())
-else:
-    basis_avg = None
-
 freq_real = real_events / total if total else 0
-recall = triggered / real_events if real_events else 0
 
-m1, m2, m3, m4 = st.columns(4)
+m1, m2 = st.columns(2)
 with m1:
     st.markdown(
         render_kpi_card(
@@ -80,28 +86,6 @@ with m1:
         unsafe_allow_html=True,
     )
 with m2:
-    st.markdown(
-        render_kpi_card(
-            label="Trigger activado",
-            value=f"{triggered}/{total}",
-            context=f"recall: {recall:.0%}",
-            level="caution" if triggered > 0 else "normal",
-            tooltip="Años en que el modelo habría activado el pago del seguro",
-        ),
-        unsafe_allow_html=True,
-    )
-with m3:
-    st.markdown(
-        render_kpi_card(
-            label="Basis risk promedio",
-            value=fmt_pp(basis_avg) if basis_avg is not None else "—",
-            context="diferencia absoluta real vs modelo",
-            level="neutral",
-            tooltip="Basis risk promedio = |pérdida real − predicción|. Mide el error de cobertura.",
-        ),
-        unsafe_allow_html=True,
-    )
-with m4:
     st.markdown(
         render_kpi_card(
             label="Período analizado",
@@ -120,30 +104,20 @@ st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": True, "
 # ─── Event table ──────────────────────────────────────────────────────────────
 st.markdown('<div class="section-label">Tabla de eventos históricos</div>', unsafe_allow_html=True)
 
-show_only_events = st.toggle("Mostrar solo años con evento real o trigger activado", value=False)
+show_only_events = st.toggle("Mostrar solo años con evento real (pérdida ≤ −14%)", value=False)
 
 display_df = df.copy()
 if "perdida_real_pct" in display_df.columns:
     display_df["Pérdida real"] = display_df["perdida_real_pct"].apply(lambda x: f"{x:+.1f}%" if pd.notna(x) else "—")
-if "score_anual" in display_df.columns:
-    display_df["Predicción modelo"] = display_df["score_anual"].apply(lambda x: f"{x:+.1f}%" if pd.notna(x) else "—")
-    display_df["Trigger activado"] = display_df["score_anual"].apply(
-        lambda x: "Sí" if pd.notna(x) and x <= TRIGGER_THRESHOLD else "No"
-    )
-if "perdida_real_pct" in df.columns and "score_anual" in df.columns:
-    display_df["Basis risk"] = (df["perdida_real_pct"] - df["score_anual"]).apply(
-        lambda x: fmt_pp(x) if pd.notna(x) else "—"
-    )
+if "rendimiento_t_ha" in display_df.columns:
+    display_df["Rendimiento (t/ha)"] = display_df["rendimiento_t_ha"].apply(lambda x: f"{x:.3f}" if pd.notna(x) else "—")
 
-cols_to_show = ["anio", "Pérdida real", "Predicción modelo", "Trigger activado", "Basis risk"]
+cols_to_show = ["anio", "Pérdida real", "Rendimiento (t/ha)"]
 cols_available = [c for c in cols_to_show if c in display_df.columns]
 display_df = display_df[cols_available].rename(columns={"anio": "Año"})
 
-if show_only_events and "Trigger activado" in display_df.columns:
-    mask = display_df["Trigger activado"] == "Sí"
-    if "Pérdida real" in display_df.columns:
-        mask |= display_df["Pérdida real"].str.startswith("-1") | display_df["Pérdida real"].str.startswith("-2")
-    display_df = display_df[mask]
+if show_only_events and "perdida_real_pct" in df.columns:
+    display_df = display_df[df["perdida_real_pct"] <= TRIGGER_THRESHOLD]
 
 st.dataframe(display_df, use_container_width=True, hide_index=True)
 
@@ -169,5 +143,3 @@ with st.expander("Nota metodológica: períodos de entrenamiento y prueba"):
 
 **Basis risk:** diferencia entre la pérdida real y la predicción del modelo. Un basis risk alto significa que el seguro puede pagar en años sin pérdida real (falso positivo) o no pagar en años con pérdida (falso negativo).
 """)
-
-st.markdown(render_disclaimer("full"), unsafe_allow_html=True)

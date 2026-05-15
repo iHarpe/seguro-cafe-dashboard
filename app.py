@@ -1,5 +1,6 @@
 import streamlit as st
 from pathlib import Path
+from urllib.parse import quote
 
 st.set_page_config(
     page_title="Seguro Cafetero",
@@ -13,17 +14,39 @@ css_path = Path(__file__).parent / "assets" / "style.css"
 if css_path.exists():
     st.markdown(f"<style>{css_path.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
+# ─── Custom fixed top header ─────────────────────────────────────────────────
+st.markdown(
+    '<div class="custom-top-header">☕ Seguro Cafetero</div>',
+    unsafe_allow_html=True,
+)
+
 # ─── Shared session state defaults ────────────────────────────────────────────
 from utils.defaults import DEFAULT_DEPARTMENT, DEFAULT_YEAR, DEFAULT_MODE
 
+# Initialize from URL query params first so config persists across full-page
+# navigations (HTML <a> links cause a new browser request and a fresh session).
 if "department" not in st.session_state:
-    st.session_state["department"] = DEFAULT_DEPARTMENT
+    raw = st.query_params.get("dept", DEFAULT_DEPARTMENT)
+    st.session_state["department"] = raw if raw in ["Risaralda", "Cundinamarca"] else DEFAULT_DEPARTMENT
 if "year" not in st.session_state:
-    st.session_state["year"] = DEFAULT_YEAR
+    try:
+        yr = int(st.query_params.get("yr", str(DEFAULT_YEAR)))
+        st.session_state["year"] = max(2007, min(2024, yr))
+    except (ValueError, TypeError):
+        st.session_state["year"] = DEFAULT_YEAR
 if "mode" not in st.session_state:
-    st.session_state["mode"] = DEFAULT_MODE
+    raw_mode = st.query_params.get("mode", DEFAULT_MODE)
+    st.session_state["mode"] = raw_mode if raw_mode in ["Básico", "Técnico"] else DEFAULT_MODE
 if "last_result" not in st.session_state:
     st.session_state["last_result"] = None
+
+# Query string carrying current config — embedded in every nav href so that
+# clicking a link preserves the config even when a fresh session is created.
+_qs = (
+    f"?dept={quote(st.session_state['department'])}"
+    f"&yr={st.session_state['year']}"
+    f"&mode={quote(st.session_state['mode'])}"
+)
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 _SVG_HOME = (
@@ -57,41 +80,34 @@ _SVG_SCEN = (
     '<circle cx="12" cy="12" r="3"/>'
     '<path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>'
 )
-_NAV_HTML = (
-    '<div class="sb-nav">'
-    f'<a href="/" target="_self" class="sb-nav-item">'
-    f'<span class="sb-nav-icon" style="color:#5C3D2E;background:#FDF6F0;">{_SVG_HOME}</span>'
-    '<span class="sb-nav-label">Inicio</span></a>'
-    f'<a href="/Alerta_Actual" target="_self" class="sb-nav-item">'
-    f'<span class="sb-nav-icon" style="color:#1E40AF;background:#EFF6FF;">{_SVG_ALERT}</span>'
-    '<span class="sb-nav-label">Evaluación de Riesgo Anual</span></a>'
-    f'<a href="/Monitoreo_Mensual" target="_self" class="sb-nav-item">'
-    f'<span class="sb-nav-icon" style="color:#16A34A;background:#F0FDF4;">{_SVG_CHART}</span>'
-    '<span class="sb-nav-label">Monitoreo Mensual</span></a>'
-    f'<a href="/Historico" target="_self" class="sb-nav-item">'
-    f'<span class="sb-nav-icon" style="color:#D97706;background:#FFF7ED;">{_SVG_HIST}</span>'
-    '<span class="sb-nav-label">Análisis Histórico</span></a>'
-    f'<a href="/Escenarios" target="_self" class="sb-nav-item">'
-    f'<span class="sb-nav-icon" style="color:#7C3AED;background:#F5F3FF;">{_SVG_SCEN}</span>'
-    '<span class="sb-nav-label">Escenarios What-If</span></a>'
-    '</div>'
-)
+
+_NAV_ITEMS_SIDEBAR = [
+    ("/",                  _SVG_HOME,  "#5C3D2E", "#FDF6F0", "Inicio"),
+    ("/Alerta_Actual",     _SVG_ALERT, "#1E40AF", "#EFF6FF", "Evaluación de Riesgo Anual"),
+    ("/Monitoreo_Mensual", _SVG_CHART, "#16A34A", "#F0FDF4", "Monitoreo Mensual"),
+    ("/Historico",         _SVG_HIST,  "#D97706", "#FFF7ED", "Análisis Histórico"),
+    ("/Escenarios",        _SVG_SCEN,  "#7C3AED", "#F5F3FF", "Escenarios What-If"),
+]
+
+_sidebar_nav_parts = ['<div class="sb-nav">']
+for _href, _svg, _color, _bg, _label in _NAV_ITEMS_SIDEBAR:
+    _sidebar_nav_parts.append(
+        f'<a href="{_href}{_qs}" target="_self" class="sb-nav-item">'
+        f'<span class="sb-nav-icon" style="color:{_color};background:{_bg};">{_svg}</span>'
+        f'<span class="sb-nav-label">{_label}</span></a>'
+    )
+_sidebar_nav_parts.append('</div>')
+_SIDEBAR_NAV_HTML = "".join(_sidebar_nav_parts)
 
 with st.sidebar:
-    st.markdown(
-        '<div class="sidebar-brand">☕ Seguro Cafetero</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('<div class="section-label">Navegación</div>', unsafe_allow_html=True)
-    st.markdown(_NAV_HTML, unsafe_allow_html=True)
+    st.markdown('<div class="section-label" style="margin-top:0;">Navegación</div>', unsafe_allow_html=True)
+    st.markdown(_SIDEBAR_NAV_HTML, unsafe_allow_html=True)
 
     st.markdown('<div class="section-label" style="margin-top:16px;">Configuración</div>', unsafe_allow_html=True)
 
     st.selectbox(
         "Departamento",
         options=["Risaralda", "Cundinamarca"],
-        index=0 if st.session_state.get("department", DEFAULT_DEPARTMENT) == "Risaralda" else 1,
         key="department",
         help="Departamento caficultor a analizar",
     )
@@ -99,7 +115,6 @@ with st.sidebar:
     st.slider(
         "Año de análisis",
         min_value=2007, max_value=2024,
-        value=st.session_state.get("year", DEFAULT_YEAR),
         step=1, key="year",
         help="Año para la evaluación anual de riesgo",
     )
@@ -107,7 +122,6 @@ with st.sidebar:
     st.radio(
         "Modo de análisis",
         options=["Básico", "Técnico"],
-        index=0 if st.session_state.get("mode", DEFAULT_MODE) == "Básico" else 1,
         key="mode",
         help="Básico: 10 variables siempre disponibles. Técnico: +8 variables satelitales.",
     )
@@ -182,81 +196,79 @@ st.markdown(f"""
 # ─── Navigation cards ─────────────────────────────────────────────────────────
 st.markdown('<div class="section-label" style="margin-top:32px;">Secciones del dashboard</div>', unsafe_allow_html=True)
 
-NAV_SVG_ALERT = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-NAV_SVG_CHART = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
-NAV_SVG_HIST  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
-NAV_SVG_SCEN  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>'
+_NAV_SVG_ALERT = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+_NAV_SVG_CHART = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
+_NAV_SVG_HIST  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
+_NAV_SVG_SCEN  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>'
 
-def _nav_card_html(icon_svg, icon_style, title, desc, tags):
-    tags_html = "".join(f'<span class="nav-tag">{t}</span>' for t in tags)
+
+def _nav_card(href, svg, icon_style, color_class, title, desc, delay_ms=0):
     return f"""
-<div class="nav-card-visual">
-  <div class="nav-card-icon" style="{icon_style}">{icon_svg}</div>
+<a href="{href}" target="_self" class="nav-card {color_class}" style="animation-delay:{delay_ms}ms">
+  <div class="nav-card-icon" style="{icon_style}">{svg}</div>
   <div class="nav-card-body">
     <div class="nav-card-title">{title}</div>
     <div class="nav-card-desc">{desc}</div>
-    <div class="nav-card-tags">{tags_html}</div>
   </div>
-</div>"""
+  <div class="nav-card-arrow">›</div>
+</a>"""
+
 
 r1c1, r1c2 = st.columns(2, gap="medium")
 r2c1, r2c2 = st.columns(2, gap="medium")
 
 with r1c1:
-    st.markdown(_nav_card_html(
-        NAV_SVG_ALERT, "background:#EFF6FF; color:#1E40AF;",
+    st.markdown(_nav_card(
+        f"/Alerta_Actual{_qs}", _NAV_SVG_ALERT,
+        "background:#EFF6FF; color:#1E40AF;", "nav-card--blue",
         "Evaluación de Riesgo Anual",
         "Ingresa variables climáticas y obtén la predicción de pérdida con semáforo de riesgo.",
-        ["XGBoost", "MAE 9.6 pp", "Semana 6"],
+        delay_ms=0,
     ), unsafe_allow_html=True)
-    st.page_link("pages/1_Alerta_Actual.py", label="Ir a Evaluación de Riesgo Anual", use_container_width=True)
 
 with r1c2:
-    st.markdown(_nav_card_html(
-        NAV_SVG_CHART, "background:#F0FDF4; color:#16A34A;",
+    st.markdown(_nav_card(
+        f"/Monitoreo_Mensual{_qs}", _NAV_SVG_CHART,
+        "background:#F0FDF4; color:#16A34A;", "nav-card--green",
         "Monitoreo Mensual",
         "Detecta señales de alerta durante la cosecha (abr–jun, oct–dic) antes de que termine el ciclo.",
-        ["HGB Mensual", "MAE 11.1 pp", "Cosecha"],
+        delay_ms=60,
     ), unsafe_allow_html=True)
-    st.page_link("pages/2_Monitoreo_Mensual.py", label="Ir a Monitoreo Mensual", use_container_width=True)
 
 with r2c1:
-    st.markdown(_nav_card_html(
-        NAV_SVG_HIST, "background:#FFF7ED; color:#D97706;",
+    st.markdown(_nav_card(
+        f"/Historico{_qs}", _NAV_SVG_HIST,
+        "background:#FFF7ED; color:#D97706;", "nav-card--amber",
         "Análisis Histórico",
-        "Backtesting 2007–2024: frecuencia del trigger, basis risk promedio y descarga de datos.",
-        ["Agronet", "2007–2024", "CSV Export"],
+        "Backtesting 2007–2024: historial de pérdidas reales y análisis de años críticos.",
+        delay_ms=120,
     ), unsafe_allow_html=True)
-    st.page_link("pages/3_Historico.py", label="Ir a Análisis Histórico", use_container_width=True)
 
 with r2c2:
-    st.markdown(_nav_card_html(
-        NAV_SVG_SCEN, "background:#F5F3FF; color:#7C3AED;",
+    st.markdown(_nav_card(
+        f"/Escenarios{_qs}", _NAV_SVG_SCEN,
+        "background:#F5F3FF; color:#7C3AED;", "nav-card--purple",
         "Escenarios What-If",
         "Ajusta variables climáticas y analiza la sensibilidad del modelo con gráfico tornado.",
-        ["Sliders", "Tornado chart", "R11"],
+        delay_ms=180,
     ), unsafe_allow_html=True)
-    st.page_link("pages/4_Escenarios.py", label="Ir a Escenarios What-If", use_container_width=True)
 
-# ─── Model summary strip ──────────────────────────────────────────────────────
+# ─── Collapsible disclaimer (replaces model strip) ────────────────────────────
 st.markdown("""
-<div class="model-strip">
-  <div class="model-strip-title">Modelos entrenados</div>
-  <div class="model-strip-items">
-    <div class="model-item">
-      <div class="model-item-name">XGBoost — Magnitud</div>
-      <div class="model-item-meta">10 vars · MAE 9.63 pp · anual</div>
-    </div>
-    <div class="model-strip-sep"></div>
-    <div class="model-item">
-      <div class="model-item-name">HGB — Detector / Trigger</div>
-      <div class="model-item-meta">18 vars · umbral −2.8% / −14%</div>
-    </div>
-    <div class="model-strip-sep"></div>
-    <div class="model-item">
-      <div class="model-item-name">HGB — Alerta Mensual</div>
-      <div class="model-item-meta">~35 vars · lags cosecha · MAE 11.1 pp</div>
-    </div>
+<details class="home-disclaimer-details">
+  <summary>⚠️&nbsp; Resultado indicativo — las predicciones son orientativas, no pólizas de seguro</summary>
+  <div class="home-disclaimer-body">
+    <p><strong>Los resultados de este dashboard son señales indicativas</strong>, no diagnósticos definitivos
+    ni pólizas de seguro. Los modelos estadísticos fueron entrenados con datos históricos (2007–2024)
+    de Risaralda y Cundinamarca. Las predicciones tienen un error promedio de ±9.6 pp (anual)
+    y ±11.1 pp (mensual). Los umbrales y primas son valores de referencia actuariales y
+    <strong>no</strong> representan productos comerciales reales.</p>
+    <table>
+      <tr><th>Modelo</th><th>Algoritmo</th><th>Entrenamiento</th><th>Prueba (out-of-sample)</th><th>MAE</th></tr>
+      <tr><td>Magnitud anual</td><td>XGBoost</td><td>2007–2020</td><td>2021–2024</td><td>9.63 pp</td></tr>
+      <tr><td>Detector / Trigger</td><td>HGB</td><td>2007–2020</td><td>2021–2024</td><td>—</td></tr>
+      <tr><td>Alerta mensual</td><td>HGB + lags cosecha</td><td>2007–2020</td><td>2021–2024</td><td>11.08 pp</td></tr>
+    </table>
   </div>
-</div>
+</details>
 """, unsafe_allow_html=True)

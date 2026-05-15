@@ -18,16 +18,22 @@ from utils.validators import validate_annual_payload
 from utils.api_client import predict_annual
 from components.semaphore import render_semaphore
 from components.metric_card import render_kpi_card, render_trigger_card
-from components.disclaimer import render_disclaimer
 
 # ─── Sidebar (navigation + config + CSS) ─────────────────────────────────────
 render_sidebar()
+st.markdown("""<style>:root {
+  --page-accent: #1E40AF;
+  --page-accent-light: #EFF6FF;
+  --page-accent-border: #93C5FD;
+}</style>""", unsafe_allow_html=True)
 
 # ─── Page header ─────────────────────────────────────────────────────────────
-st.markdown(
-    '<div class="page-title">Evaluación de Riesgo Anual</div>',
-    unsafe_allow_html=True,
-)
+st.markdown("""
+<div class="page-header">
+  <div class="page-accent-bar"></div>
+  <div class="page-title">Evaluación de Riesgo Anual</div>
+</div>
+""", unsafe_allow_html=True)
 st.markdown(
     '<div class="page-subtitle">Ingresa las variables climáticas del año a evaluar '
     'y consulta el nivel de riesgo estimado por el modelo.</div>',
@@ -104,7 +110,6 @@ with hero_col:
                 unsafe_allow_html=True,
             )
 
-    st.markdown(render_disclaimer("full"), unsafe_allow_html=True)
 
 # ─── Inputs column ────────────────────────────────────────────────────────────
 with inputs_col:
@@ -118,10 +123,11 @@ with inputs_col:
     def _number(key: str, ranges: dict) -> float:
         r = ranges[key]
         label = f"{r['label']} ({r['unit']})" if r.get("unit") else r["label"]
+        floor = r.get("floor")
         return st.number_input(
             label=label,
-            min_value=float(r["min"]),
-            max_value=float(r["max"]),
+            min_value=float(floor) if floor is not None else None,
+            max_value=None,
             value=float(r["default"]),
             step=float(r["step"]),
             key=f"inp_{key}",

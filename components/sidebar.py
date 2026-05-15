@@ -1,5 +1,6 @@
 import streamlit as st
 from pathlib import Path
+from urllib.parse import quote
 from utils.defaults import DEFAULT_DEPARTMENT, DEFAULT_YEAR, DEFAULT_MODE
 
 # SVG icons — same paths used in home page cards, resized to 16×16
@@ -45,10 +46,15 @@ _NAV_ITEMS = [
 
 
 def _nav_html() -> str:
+    # Config is embedded in the href so it survives across full-page navigations.
+    dept = st.session_state.get("department", DEFAULT_DEPARTMENT)
+    yr   = st.session_state.get("year", DEFAULT_YEAR)
+    mode = st.session_state.get("mode", DEFAULT_MODE)
+    qs   = f"?dept={quote(str(dept))}&yr={yr}&mode={quote(str(mode))}"
     items = []
     for href, svg, color, bg, label in _NAV_ITEMS:
         items.append(
-            f'<a href="{href}" target="_self" class="sb-nav-item">'
+            f'<a href="{href}{qs}" target="_self" class="sb-nav-item">'
             f'<span class="sb-nav-icon" style="color:{color};background:{bg};">{svg}</span>'
             f'<span class="sb-nav-label">{label}</span>'
             f'</a>'
@@ -65,22 +71,32 @@ def render_sidebar() -> bool:
             unsafe_allow_html=True,
         )
 
+    # Fixed top header (injected into main content area, position:fixed spans full width)
+    st.markdown(
+        '<div class="custom-top-header">☕ Seguro Cafetero</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Initialize from URL query params first so config persists across full-page
+    # navigations (HTML <a> links cause a new browser request and a fresh session).
+    # Falls back to defaults when no params are present (first visit).
     if "department" not in st.session_state:
-        st.session_state["department"] = DEFAULT_DEPARTMENT
+        raw = st.query_params.get("dept", DEFAULT_DEPARTMENT)
+        st.session_state["department"] = raw if raw in ["Risaralda", "Cundinamarca"] else DEFAULT_DEPARTMENT
     if "year" not in st.session_state:
-        st.session_state["year"] = DEFAULT_YEAR
+        try:
+            yr = int(st.query_params.get("yr", str(DEFAULT_YEAR)))
+            st.session_state["year"] = max(2007, min(2024, yr))
+        except (ValueError, TypeError):
+            st.session_state["year"] = DEFAULT_YEAR
     if "mode" not in st.session_state:
-        st.session_state["mode"] = DEFAULT_MODE
+        raw_mode = st.query_params.get("mode", DEFAULT_MODE)
+        st.session_state["mode"] = raw_mode if raw_mode in ["Básico", "Técnico"] else DEFAULT_MODE
 
     with st.sidebar:
-        st.markdown(
-            '<div class="sidebar-brand">☕ Seguro Cafetero</div>',
-            unsafe_allow_html=True,
-        )
-
         # ─── Navigation ───────────────────────────────────────────────────────
         st.markdown(
-            '<div class="section-label">Navegación</div>',
+            '<div class="section-label" style="margin-top:0;">Navegación</div>',
             unsafe_allow_html=True,
         )
         st.markdown(_nav_html(), unsafe_allow_html=True)
@@ -93,20 +109,17 @@ def render_sidebar() -> bool:
         st.selectbox(
             "Departamento",
             options=["Risaralda", "Cundinamarca"],
-            index=0 if st.session_state["department"] == "Risaralda" else 1,
             key="department",
             help="Departamento caficultor a analizar",
         )
         st.slider(
             "Año de análisis",
             min_value=2007, max_value=2024,
-            value=st.session_state["year"],
             step=1, key="year",
         )
         st.radio(
             "Modo de análisis",
             options=["Básico", "Técnico"],
-            index=0 if st.session_state["mode"] == "Básico" else 1,
             key="mode",
             help=(
                 "Básico: 10 variables climáticas siempre disponibles.  \n"

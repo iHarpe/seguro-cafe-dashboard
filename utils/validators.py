@@ -9,10 +9,8 @@ def validate_annual_payload(data: dict) -> tuple[bool, str | None]:
         if key not in all_ranges:
             continue
         r = all_ranges[key]
-        if not (r["min"] <= val <= r["max"]):
+        floor = r.get("floor")
+        if floor is not None and val < floor:
             label = r.get("label", key)
-            return False, (
-                f"{label}: valor {val} fuera del rango permitido "
-                f"[{r['min']} – {r['max']}] {r.get('unit', '')}."
-            )
+            return False, f"{label}: el valor no puede ser negativo."
     return True, None

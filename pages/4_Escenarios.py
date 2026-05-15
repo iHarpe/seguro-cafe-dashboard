@@ -18,11 +18,20 @@ from utils.api_client import predict_annual
 from utils.validators import validate_annual_payload
 from components.charts import plot_tornado
 from components.metric_card import render_kpi_card
-from components.disclaimer import render_disclaimer
 
 render_sidebar()
+st.markdown("""<style>:root {
+  --page-accent: #7C3AED;
+  --page-accent-light: #F5F3FF;
+  --page-accent-border: #C4B5FD;
+}</style>""", unsafe_allow_html=True)
 
-st.markdown('<div class="page-title">Análisis de Escenarios What-If</div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="page-header">
+  <div class="page-accent-bar"></div>
+  <div class="page-title">Análisis de Escenarios What-If</div>
+</div>
+""", unsafe_allow_html=True)
 st.markdown(
     '<div class="page-subtitle">Ajusta las variables climáticas para entender la sensibilidad del modelo. Identifica cuáles factores tienen mayor impacto en la predicción.</div>',
     unsafe_allow_html=True,
@@ -150,5 +159,3 @@ with results_col:
             st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
     else:
         st.info("Ajusta los controles deslizantes y presiona **Calcular escenario**.")
-
-st.markdown(render_disclaimer("basic"), unsafe_allow_html=True)
