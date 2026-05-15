@@ -7,15 +7,17 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+from datetime import datetime
+
 from components.sidebar import render_sidebar
 from utils.defaults import (
     VARIABLE_RANGES, TECHNICAL_VARIABLE_RANGES,
     DEFAULT_DEPARTMENT, DEFAULT_YEAR,
     DETECTOR_THRESHOLD, TRIGGER_THRESHOLD, MODEL_MAE_ANNUAL,
 )
-from utils.formatters import fmt_pct, fmt_pp, level_from_api
+from utils.formatters import fmt_pct, fmt_pp, level_from_api, freshness_level
 from utils.validators import validate_annual_payload
-from utils.api_client import predict_annual
+from utils.api_client import predict_annual, get_health_full
 from components.semaphore import render_semaphore
 from components.metric_card import render_kpi_card, render_trigger_card
 
@@ -86,29 +88,53 @@ with hero_col:
         st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
         col_b1, col_b2 = st.columns(2)
         with col_b1:
+            score_m3 = data.get("perdida_estimada_pct") if result and result.get("ok") else None
             st.markdown(
                 render_kpi_card(
-                    label="Basis Risk est.",
-                    value=fmt_pp(basis) if basis is not None else "—",
-                    context="diferencia real vs predicción",
-                    level="neutral",
-                    tooltip="Basis risk estimado = diferencia entre pérdida real histórica y predicción del modelo para este año.",
+                    label="Score M3 (continuo)",
+                    value=fmt_pct(score_m3) if score_m3 is not None else "---",
+                    context="senal continua del detector HGB",
+                    level=level_from_api(data.get("nivel_alerta", "")) if result and result.get("ok") else "neutral",
+                    tooltip="Score del modelo HGB Set A. Basis risk real: consultar seccion Historico.",
                 ),
                 unsafe_allow_html=True,
             )
         with col_b2:
-            det_label = "Detector activo" if detector_on else "Sin detección"
+            det_label = "Detector activo" if detector_on else "Sin deteccion"
             det_level = "caution" if detector_on else "normal"
             st.markdown(
                 render_kpi_card(
-                    label="Detector (−2.8%)",
+                    label="Detector (-2.8%)",
                     value=det_label,
                     context=f"umbral: {DETECTOR_THRESHOLD}%",
                     level=det_level,
-                    tooltip="Señal temprana: la predicción supera −2.8%. Es una alerta previa al trigger.",
+                    tooltip="Senal temprana: la prediccion supera -2.8%. Es una alerta previa al trigger.",
                 ),
                 unsafe_allow_html=True,
             )
+
+    # Harvest season badge
+    current_month = datetime.now().month
+    if current_month in {4, 5, 6, 10, 11, 12}:
+        st.info("Temporada de cosecha activa -- M4 (modelo mensual) en alta confianza.")
+
+    # Data freshness indicator
+    health_data = get_health_full()
+    if health_data["ok"]:
+        days = health_data["data"].get("data_freshness_days")
+        fl = freshness_level(days)
+        fresh_color = {"normal": "#16A34A", "caution": "#D97706", "alert": "#DC2626"}.get(fl, "#94A3B8")
+        st.markdown(
+            f'<div style="font-size:12px;color:{fresh_color};margin-top:8px;">'
+            f'Datos actualizados hace {days} dias</div>',
+            unsafe_allow_html=True,
+        )
+
+    # AUC disclaimer
+    st.caption(
+        "Senal limitada: AUC-ROC del clasificador = 0.32 "
+        "(limitado por muestra de 36 obs anuales y 7 eventos historicos)."
+    )
 
 
 # ─── Inputs column ────────────────────────────────────────────────────────────

@@ -61,3 +61,30 @@ def get_history(departamento: str) -> dict:
 
 def get_calibration() -> dict:
     return _get("/calibrate/trigger")
+
+
+def get_backtest(departamento: str | None = None,
+                 umbral_pct: float | None = None) -> dict:
+    params = []
+    if departamento:
+        params.append(f"departamento={departamento}")
+    if umbral_pct is not None:
+        params.append(f"umbral_pct={umbral_pct}")
+    qs = f"?{'&'.join(params)}" if params else ""
+    return _get(f"/data/backtest{qs}")
+
+
+def get_monthly_history(departamento: str) -> dict:
+    return _get(f"/data/monthly-history/{departamento}")
+
+
+def get_oof() -> dict:
+    return _get("/data/oof")
+
+
+def get_correlations() -> dict:
+    return _get("/data/correlations")
+
+
+def get_health_full() -> dict:
+    return _get("/health")

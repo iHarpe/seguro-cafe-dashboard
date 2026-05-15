@@ -8,7 +8,7 @@ def render_disclaimer(detail_level: str = "basic") -> str:
     basic_text = (
         f"<strong>Resultado indicativo</strong> — Este modelo fue entrenado con "
         f"{MODEL_N_OBS} observaciones ({MODEL_N_OBS // 2} años × 2 departamentos). "
-        f"Los resultados son señales de alerta, no diagnósticos definitivos."
+        f"Los resultados son señales de alerta."
     )
 
     if detail_level == "basic":

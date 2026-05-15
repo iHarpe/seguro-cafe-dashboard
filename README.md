@@ -52,7 +52,7 @@ uvicorn src.api.main:app --reload --port 8000
 
 # Terminal 2: Dashboard
 cd ../seguro-cafe-dashboard
-streamlit run app.py
+python -m streamlit run app.py
 # → http://localhost:8501
 ```
 

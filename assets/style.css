@@ -540,6 +540,20 @@ hr { border: none; border-top: 1px solid #E2E8F0; margin: 16px 0; }
     box-shadow: 0 8px 28px rgba(124, 58, 237, 0.12);
   }
   .nav-card--purple:hover .nav-card-arrow { transform: translateX(4px); color: #7C3AED; }
+
+  .nav-card--cyan:hover {
+    border-color: #67E8F9;
+    background-color: rgba(8, 145, 178, 0.025);
+    box-shadow: 0 8px 28px rgba(8, 145, 178, 0.12);
+  }
+  .nav-card--cyan:hover .nav-card-arrow { transform: translateX(4px); color: #0891B2; }
+
+  .nav-card--pink:hover {
+    border-color: #F9A8D4;
+    background-color: rgba(190, 24, 93, 0.025);
+    box-shadow: 0 8px 28px rgba(190, 24, 93, 0.12);
+  }
+  .nav-card--pink:hover .nav-card-arrow { transform: translateX(4px); color: #BE185D; }
 }
 
 @media (prefers-reduced-motion: reduce) {

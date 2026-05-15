@@ -80,13 +80,26 @@ _SVG_SCEN = (
     '<circle cx="12" cy="12" r="3"/>'
     '<path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>'
 )
+_SVG_BOOK = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>'
+    '<path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>'
+)
+_SVG_PULSE = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
+)
 
 _NAV_ITEMS_SIDEBAR = [
     ("/",                  _SVG_HOME,  "#5C3D2E", "#FDF6F0", "Inicio"),
     ("/Alerta_Actual",     _SVG_ALERT, "#1E40AF", "#EFF6FF", "Evaluación de Riesgo Anual"),
     ("/Monitoreo_Mensual", _SVG_CHART, "#16A34A", "#F0FDF4", "Monitoreo Mensual"),
     ("/Historico",         _SVG_HIST,  "#D97706", "#FFF7ED", "Análisis Histórico"),
-    ("/Escenarios",        _SVG_SCEN,  "#7C3AED", "#F5F3FF", "Escenarios What-If"),
+    ("/Simulador",         _SVG_SCEN,  "#7C3AED", "#F5F3FF", "Simulador Actuarial"),
+    ("/Metodologia",       _SVG_BOOK,  "#0891B2", "#ECFEFF", "Metodología"),
+    ("/Score_Mensual",     _SVG_PULSE, "#BE185D", "#FDF2F8", "Score Mensual"),
 ]
 
 _sidebar_nav_parts = ['<div class="sb-nav">']
@@ -180,7 +193,7 @@ st.markdown(f"""
       </div>
       <div class="home-stat-divider"></div>
       <div class="home-stat">
-        <span class="home-stat-value">3</span>
+        <span class="home-stat-value">4</span>
         <span class="home-stat-label">Modelos ML</span>
       </div>
       <div class="home-stat-divider"></div>
@@ -200,6 +213,8 @@ _NAV_SVG_ALERT = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" st
 _NAV_SVG_CHART = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
 _NAV_SVG_HIST  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
 _NAV_SVG_SCEN  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>'
+_NAV_SVG_BOOK  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>'
+_NAV_SVG_PULSE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
 
 
 def _nav_card(href, svg, icon_style, color_class, title, desc, delay_ms=0):
@@ -246,23 +261,42 @@ with r2c1:
 
 with r2c2:
     st.markdown(_nav_card(
-        f"/Escenarios{_qs}", _NAV_SVG_SCEN,
+        f"/Simulador{_qs}", _NAV_SVG_SCEN,
         "background:#F5F3FF; color:#7C3AED;", "nav-card--purple",
-        "Escenarios What-If",
-        "Ajusta variables climáticas y analiza la sensibilidad del modelo con gráfico tornado.",
+        "Simulador Actuarial",
+        "Configura umbrales, cobertura y loading factor para evaluar el trade-off costo-riesgo del seguro.",
         delay_ms=180,
+    ), unsafe_allow_html=True)
+
+r3c1, r3c2 = st.columns(2, gap="medium")
+
+with r3c1:
+    st.markdown(_nav_card(
+        f"/Metodologia{_qs}", _NAV_SVG_BOOK,
+        "background:#ECFEFF; color:#0891B2;", "nav-card--cyan",
+        "Metodología",
+        "Arquitectura del sistema, fuentes de datos, métricas de desempeño y limitaciones conocidas.",
+        delay_ms=240,
+    ), unsafe_allow_html=True)
+
+with r3c2:
+    st.markdown(_nav_card(
+        f"/Score_Mensual{_qs}", _NAV_SVG_PULSE,
+        "background:#FDF2F8; color:#BE185D;", "nav-card--pink",
+        "Score Mensual (M4)",
+        "Trayectoria histórica del score mensual de alerta temprana y comparación M4 vs M1.",
+        delay_ms=300,
     ), unsafe_allow_html=True)
 
 # ─── Collapsible disclaimer (replaces model strip) ────────────────────────────
 st.markdown("""
 <details class="home-disclaimer-details">
-  <summary>⚠️&nbsp; Resultado indicativo — las predicciones son orientativas, no pólizas de seguro</summary>
+  <summary>⚠️&nbsp; Resultado indicativo</summary>
   <div class="home-disclaimer-body">
-    <p><strong>Los resultados de este dashboard son señales indicativas</strong>, no diagnósticos definitivos
-    ni pólizas de seguro. Los modelos estadísticos fueron entrenados con datos históricos (2007–2024)
+    <p><strong>Los resultados de este dashboard son señales indicativas.</strong>
+    Los modelos estadísticos fueron entrenados con datos históricos (2007–2024)
     de Risaralda y Cundinamarca. Las predicciones tienen un error promedio de ±9.6 pp (anual)
-    y ±11.1 pp (mensual). Los umbrales y primas son valores de referencia actuariales y
-    <strong>no</strong> representan productos comerciales reales.</p>
+    y ±11.1 pp (mensual). Los umbrales y primas son valores de referencia actuariales.</p>
     <table>
       <tr><th>Modelo</th><th>Algoritmo</th><th>Entrenamiento</th><th>Prueba (out-of-sample)</th><th>MAE</th></tr>
       <tr><td>Magnitud anual</td><td>XGBoost</td><td>2007–2020</td><td>2021–2024</td><td>9.63 pp</td></tr>

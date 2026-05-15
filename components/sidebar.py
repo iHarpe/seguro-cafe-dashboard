@@ -35,13 +35,26 @@ _SVG_SCEN = (
     '<circle cx="12" cy="12" r="3"/>'
     '<path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>'
 )
+_SVG_BOOK = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>'
+    '<path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>'
+)
+_SVG_PULSE = (
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
+)
 
 _NAV_ITEMS = [
     ("/",                  _SVG_HOME,  "#5C3D2E", "#FDF6F0", "Inicio"),
     ("/Alerta_Actual",     _SVG_ALERT, "#1E40AF", "#EFF6FF", "Evaluación de Riesgo Anual"),
     ("/Monitoreo_Mensual", _SVG_CHART, "#16A34A", "#F0FDF4", "Monitoreo Mensual"),
     ("/Historico",         _SVG_HIST,  "#D97706", "#FFF7ED", "Análisis Histórico"),
-    ("/Escenarios",        _SVG_SCEN,  "#7C3AED", "#F5F3FF", "Escenarios What-If"),
+    ("/Simulador",         _SVG_SCEN,  "#7C3AED", "#F5F3FF", "Simulador Actuarial"),
+    ("/Metodologia",       _SVG_BOOK,  "#0891B2", "#ECFEFF", "Metodología"),
+    ("/Score_Mensual",     _SVG_PULSE, "#BE185D", "#FDF2F8", "Score Mensual"),
 ]
 
 

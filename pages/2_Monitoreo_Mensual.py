@@ -14,9 +14,11 @@ from utils.defaults import (
     DETECTOR_THRESHOLD, TRIGGER_THRESHOLD, MODEL_MAE_MONTHLY_ANNUALIZED,
 )
 from utils.formatters import fmt_pct, level_from_score, color_for_level
-from utils.api_client import predict_monthly
-from components.charts import plot_monthly_scores
+from utils.api_client import predict_monthly, get_monthly_history
+from components.charts import plot_monthly_scores, plot_monthly_history_full
 from components.metric_card import render_kpi_card
+
+CURRENT_YEAR = 2024
 
 HARVEST_MONTHS = {4: "Abril", 5: "Mayo", 6: "Junio", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"}
 ALL_MONTHS = {
@@ -80,6 +82,27 @@ with st.expander("Parámetros de zona y mercado", expanded=False):
             value=terrain["pendiente_media"], step=0.5,
             help="Pendiente media del terreno",
         )
+
+# ─── Historical M4 trajectory ────────────────────────────────────────────────
+with st.expander("Trayectoria historica del Score Mensual (M4)", expanded=False):
+    hist_m = get_monthly_history(department)
+    if hist_m["ok"]:
+        hist_df = pd.DataFrame(hist_m["data"])
+        if not hist_df.empty and "score_m4" in hist_df.columns:
+            fig_hist = plot_monthly_history_full(hist_df)
+            st.plotly_chart(fig_hist, use_container_width=True, config={"displayModeBar": False})
+        else:
+            st.info("Sin datos historicos mensuales disponibles.")
+    else:
+        st.warning(f"No se pudo cargar el historial mensual: {hist_m['error']}")
+
+# ─── Data warning for 2025+ ─────────────────────────────────────────────────
+if year > CURRENT_YEAR:
+    st.warning(
+        f"Ano {year} fuera del rango de entrenamiento (2007-{CURRENT_YEAR}). "
+        "Los scores son extrapolaciones y pueden ser poco confiables.",
+        icon="⚠️",
+    )
 
 # ─── Monthly records input ────────────────────────────────────────────────────
 st.markdown('<div class="section-label">Registros mensuales (meses de cosecha)</div>', unsafe_allow_html=True)
@@ -173,7 +196,9 @@ if monthly_result and monthly_result.get("ok"):
             for p in predictions
             if p.get("score") is not None
         ]
-        avg_score = sum(scores) / len(scores) if scores else 0
+        score_anualizado = data.get("score_anualizado")
+        if score_anualizado is None and scores:
+            score_anualizado = sum(scores) / len(scores)
         any_alert = any(s <= DETECTOR_THRESHOLD for s in scores)
 
         st.markdown('<div class="section-label">Resumen</div>', unsafe_allow_html=True)
@@ -181,11 +206,11 @@ if monthly_result and monthly_result.get("ok"):
         with m1:
             st.markdown(
                 render_kpi_card(
-                    label="Score anualizado promedio",
-                    value=fmt_pct(avg_score),
+                    label="Score anualizado",
+                    value=fmt_pct(score_anualizado),
                     context=f"MAE modelo: {MODEL_MAE_MONTHLY_ANNUALIZED} pp",
-                    level=level_from_score(avg_score),
-                    tooltip="Promedio de los scores mensuales ingresados",
+                    level=level_from_score(score_anualizado),
+                    tooltip="Score anualizado calculado por la API a partir de los meses ingresados",
                 ),
                 unsafe_allow_html=True,
             )
@@ -234,3 +259,25 @@ if monthly_result and monthly_result.get("ok"):
             for p in predictions
         ])
         st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+        with st.expander("Formula de pago del seguro"):
+            st.markdown(f"""
+**Score anualizado:** {fmt_pct(score_anualizado)}
+
+**Umbrales operativos:**
+- Detector: {DETECTOR_THRESHOLD}% (alerta temprana)
+- Trigger: {TRIGGER_THRESHOLD}% (activa pago)
+
+**Logica de pago:**
+1. Si el score anualizado cae por debajo del umbral de trigger ({TRIGGER_THRESHOLD}%), el seguro se activa.
+2. El pago es proporcional a la diferencia entre el score y el umbral: `pago_pp = |score - umbral|`.
+3. El pago en USD se calcula como: `pago_pp / 100 * rendimiento_t_ha * precio_usd_ton`.
+
+Los scores mensuales se calculan con el modelo M4 (HGB + lags de cosecha).
+El score anualizado es el promedio ponderado de los meses ingresados.
+""")
+            if score_anualizado is not None and score_anualizado <= TRIGGER_THRESHOLD:
+                pago_pp = abs(score_anualizado - TRIGGER_THRESHOLD)
+                st.success(f"Pago estimado: {pago_pp:.1f} pp (score {fmt_pct(score_anualizado)} < umbral {TRIGGER_THRESHOLD}%)")
+            elif score_anualizado is not None:
+                st.info(f"Sin pago: score {fmt_pct(score_anualizado)} > umbral {TRIGGER_THRESHOLD}%")
