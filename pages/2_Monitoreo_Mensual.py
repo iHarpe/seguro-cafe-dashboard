@@ -14,8 +14,8 @@ from utils.defaults import (
     DETECTOR_THRESHOLD, TRIGGER_THRESHOLD, MODEL_MAE_MONTHLY_ANNUALIZED,
 )
 from utils.formatters import fmt_pct, level_from_score, color_for_level
-from utils.api_client import predict_monthly, get_monthly_history
-from components.charts import plot_monthly_scores, plot_monthly_history_full
+from utils.api_client import predict_monthly, get_monthly_history, get_history
+from components.charts import plot_monthly_scores, plot_monthly_history_full, plot_historical_dual
 from components.metric_card import render_kpi_card
 
 CURRENT_YEAR = 2024
@@ -51,7 +51,15 @@ st.markdown(
 )
 
 department = st.session_state.get("department", DEFAULT_DEPARTMENT)
-year       = st.session_state.get("year", DEFAULT_YEAR)
+
+ctrl_yr_col, _ = st.columns([1, 4])
+with ctrl_yr_col:
+    year = st.slider(
+        "Año de análisis",
+        min_value=2007, max_value=2024,
+        step=1, key="year",
+        help="Año para el monitoreo mensual",
+    )
 
 terrain = DEPT_TERRAIN.get(department, DEPT_TERRAIN["Risaralda"])
 
@@ -96,10 +104,25 @@ with st.expander("Trayectoria historica del Score Mensual (M4)", expanded=False)
     else:
         st.warning(f"No se pudo cargar el historial mensual: {hist_m['error']}")
 
+# ─── Annual real vs predicted (Gráfico B) ───────────────────────────────────
+with st.expander("Pérdida real vs predicción anual (últimos años)", expanded=False):
+    hist_annual = get_history(department)
+    if hist_annual["ok"] and hist_annual["data"]:
+        _hdf = pd.DataFrame(hist_annual["data"])
+        if "perdida_rendimiento_anual_pct" in _hdf.columns:
+            _hdf = _hdf.rename(columns={"perdida_rendimiento_anual_pct": "perdida_real_pct"})
+        if "anio" in _hdf.columns:
+            _hdf = _hdf[_hdf["anio"] >= _hdf["anio"].max() - 5]
+        fig_b = plot_historical_dual(_hdf)
+        st.plotly_chart(fig_b, use_container_width=True, config={"displayModeBar": False})
+        st.caption("Grafico anual de referencia: perdida real (Agronet) vs prediccion M1. Ultimos 5 anos.")
+    else:
+        st.info("No se pudo cargar el historico anual.")
+
 # ─── Data warning for 2025+ ─────────────────────────────────────────────────
 if year > CURRENT_YEAR:
     st.warning(
-        f"Ano {year} fuera del rango de entrenamiento (2007-{CURRENT_YEAR}). "
+        f"Año {year} fuera del rango de entrenamiento (2007-{CURRENT_YEAR}). "
         "Los scores son extrapolaciones y pueden ser poco confiables.",
         icon="⚠️",
     )

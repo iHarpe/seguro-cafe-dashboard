@@ -98,8 +98,8 @@ _NAV_ITEMS_SIDEBAR = [
     ("/Monitoreo_Mensual", _SVG_CHART, "#16A34A", "#F0FDF4", "Monitoreo Mensual"),
     ("/Historico",         _SVG_HIST,  "#D97706", "#FFF7ED", "Análisis Histórico"),
     ("/Simulador",         _SVG_SCEN,  "#7C3AED", "#F5F3FF", "Simulador Actuarial"),
-    ("/Metodologia",       _SVG_BOOK,  "#0891B2", "#ECFEFF", "Metodología"),
     ("/Score_Mensual",     _SVG_PULSE, "#BE185D", "#FDF2F8", "Score Mensual"),
+    ("/Metodologia",       _SVG_BOOK,  "#0891B2", "#ECFEFF", "Metodología"),
 ]
 
 _sidebar_nav_parts = ['<div class="sb-nav">']
@@ -125,20 +125,6 @@ with st.sidebar:
         help="Departamento caficultor a analizar",
     )
 
-    st.slider(
-        "Año de análisis",
-        min_value=2007, max_value=2024,
-        step=1, key="year",
-        help="Año para la evaluación anual de riesgo",
-    )
-
-    st.radio(
-        "Modo de análisis",
-        options=["Básico", "Técnico"],
-        key="mode",
-        help="Básico: 10 variables siempre disponibles. Técnico: +8 variables satelitales.",
-    )
-
     st.markdown('<div class="section-label" style="margin-top:24px;">Estado del servicio</div>', unsafe_allow_html=True)
 
     from utils.api_client import health_check
@@ -159,7 +145,7 @@ with st.sidebar:
         st.caption("Ejecuta: `uvicorn src.api.main:app --port 8000`")
 
     st.markdown(
-        '<div class="sidebar-footer">Seguro Agrícola Indexado · MIAD</div>',
+        '<div class="sidebar-footer">Seguro Agrícola Indexado</div>',
         unsafe_allow_html=True,
     )
 
@@ -272,19 +258,19 @@ r3c1, r3c2 = st.columns(2, gap="medium")
 
 with r3c1:
     st.markdown(_nav_card(
-        f"/Metodologia{_qs}", _NAV_SVG_BOOK,
-        "background:#ECFEFF; color:#0891B2;", "nav-card--cyan",
-        "Metodología",
-        "Arquitectura del sistema, fuentes de datos, métricas de desempeño y limitaciones conocidas.",
+        f"/Score_Mensual{_qs}", _NAV_SVG_PULSE,
+        "background:#FDF2F8; color:#BE185D;", "nav-card--pink",
+        "Score Mensual (M4)",
+        "Trayectoria histórica del score mensual de alerta temprana y comparación M4 vs M1.",
         delay_ms=240,
     ), unsafe_allow_html=True)
 
 with r3c2:
     st.markdown(_nav_card(
-        f"/Score_Mensual{_qs}", _NAV_SVG_PULSE,
-        "background:#FDF2F8; color:#BE185D;", "nav-card--pink",
-        "Score Mensual (M4)",
-        "Trayectoria histórica del score mensual de alerta temprana y comparación M4 vs M1.",
+        f"/Metodologia{_qs}", _NAV_SVG_BOOK,
+        "background:#ECFEFF; color:#0891B2;", "nav-card--cyan",
+        "Metodología",
+        "Arquitectura del sistema, fuentes de datos, métricas de desempeño y limitaciones conocidas.",
         delay_ms=300,
     ), unsafe_allow_html=True)
 

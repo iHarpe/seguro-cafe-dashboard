@@ -137,7 +137,7 @@ st.markdown('<div class="section-label" style="margin-top:16px;">Ultimos 12 mese
 last_12 = valid_df.tail(12)
 display_12 = last_12.copy()
 display_12["Mes"] = display_12["mes"].map(MONTH_NAMES)
-display_12["Ano"] = display_12["anio"].astype(int)
+display_12["Año"] = display_12["anio"].astype(int)
 display_12["Score M4"] = display_12["score_m4"].apply(lambda x: f"{x:+.1f}%" if pd.notna(x) else "---")
 display_12["Alerta"] = display_12["score_m4"].apply(
     lambda x: "Si" if x <= DETECTOR_THRESHOLD else "No"
@@ -146,7 +146,7 @@ display_12["Trigger"] = display_12["score_m4"].apply(
     lambda x: "Activado" if x <= TRIGGER_THRESHOLD else "---"
 )
 st.dataframe(
-    display_12[["Ano", "Mes", "Score M4", "Alerta", "Trigger"]],
+    display_12[["Año", "Mes", "Score M4", "Alerta", "Trigger"]],
     use_container_width=True, hide_index=True,
 )
 
@@ -173,14 +173,14 @@ if annual_result["ok"]:
             merged["M4 promedio"] = merged["m4_promedio_anual"].apply(lambda x: f"{x:+.1f}%")
             merged[f"M1 prediccion"] = merged[pred_col].apply(lambda x: f"{x:+.1f}%" if pd.notna(x) else "---")
             merged["Perdida real"] = merged["perdida_real_pct"].apply(lambda x: f"{x:+.1f}%" if pd.notna(x) else "---")
-            merged["Ano"] = merged["anio"].astype(int)
+            merged["Año"] = merged["anio"].astype(int)
             st.dataframe(
-                merged[["Ano", "M4 promedio", "M1 prediccion", "Perdida real"]],
+                merged[["Año", "M4 promedio", "M1 prediccion", "Perdida real"]],
                 use_container_width=True, hide_index=True,
             )
 
             st.caption(
-                "M4 promedio: media aritmetica de los scores mensuales del ano. "
+                "M4 promedio: media aritmética de los scores mensuales del año. "
                 "M1: prediccion anual del modelo XGBoost. "
                 "Perdida real: variacion de rendimiento reportada por Agronet."
             )

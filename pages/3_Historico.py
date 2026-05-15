@@ -33,6 +33,7 @@ st.markdown(
     '<div class="page-subtitle">Backtesting del seguro parametrico: comparacion de pagos del modelo vs perdidas reales de Agronet.</div>',
     unsafe_allow_html=True,
 )
+st.caption("Granularidad: departamental (no municipal). Los datos satelitales se agregan por media zonal a nivel de departamento. Ver Metodologia > Limitaciones.")
 
 department = st.session_state.get("department", DEFAULT_DEPARTMENT)
 
@@ -94,7 +95,7 @@ with m1:
     st.markdown(render_kpi_card(
         label="Basis risk promedio",
         value=f"{br_pp:.1f} pp",
-        context=f"sobre {active.sum()} anios activos",
+        context=f"sobre {active.sum()} años activos",
         level=br_level,
         tooltip="Diferencia media absoluta entre pago del seguro y perdida real",
     ), unsafe_allow_html=True)
@@ -102,7 +103,7 @@ with m2:
     st.markdown(render_kpi_card(
         label="Basis risk (USD)",
         value=f"USD {br_usd:.1f}k",
-        context="promedio por departamento-anio",
+        context="promedio por departamento-año",
         level=br_level,
     ), unsafe_allow_html=True)
 with m3:
@@ -155,7 +156,7 @@ if cal_result["ok"]:
 
 # --- Event table ---
 st.markdown('<div class="section-label">Tabla de eventos historicos</div>', unsafe_allow_html=True)
-show_only_events = st.toggle("Mostrar solo anios con evento real o trigger activo", value=False)
+show_only_events = st.toggle("Mostrar solo años con evento real o trigger activo", value=False)
 
 display_df = bt_df.copy()
 display_df["Perdida real"] = display_df["perdida_real_pct"].apply(lambda x: f"{x:+.1f}%" if pd.notna(x) else "---")
@@ -167,7 +168,7 @@ display_df["Trigger"] = display_df["trigger_activado"].map({True: "Activado", Fa
 display_df["Split"] = display_df["split"]
 
 cols_show = ["anio", "Perdida real", "Prediccion M3", "Evento", "Trigger", "Pago (pp)", "Basis risk", "Split"]
-table_df = display_df[cols_show].rename(columns={"anio": "Anio"})
+table_df = display_df[cols_show].rename(columns={"anio": "Año"})
 
 if show_only_events:
     mask = bt_df["evento_real"] | bt_df["trigger_activado"]

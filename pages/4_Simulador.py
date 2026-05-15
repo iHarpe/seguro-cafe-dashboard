@@ -163,7 +163,7 @@ with results_col:
         prem_level = "normal" if 30 <= premium_usd_ha <= 80 else "caution" if premium_usd_ha <= 120 else "alert"
         st.markdown(render_kpi_card(
             label="Prima estimada",
-            value=f"USD {premium_usd_ha:.0f}/ha/anio",
+            value=f"USD {premium_usd_ha:.0f}/ha/año",
             context=f"pura: {pure_premium_pp:.2f} pp + loading {loading_factor:.0%}",
             level=prem_level,
         ), unsafe_allow_html=True)
@@ -234,7 +234,69 @@ with results_col:
     > prima **USD {premium_usd_ha:.0f}/ha** ({premium_pct_income:.1f}% del ingreso bruto).
     """)
 
-    # --- Apply button ---
-    if st.button("Aplicar como configuracion operativa", type="primary", use_container_width=True):
-        st.session_state["trigger_threshold"] = threshold
-        st.success(f"Umbral operativo actualizado a {threshold}%")
+    # --- Apply & Compare buttons ---
+    btn1, btn2 = st.columns(2)
+    with btn1:
+        if st.button("Aplicar como configuracion operativa", type="primary", use_container_width=True):
+            st.session_state["prev_config"] = {
+                "Umbral (%)": st.session_state.get("trigger_threshold", int(TRIGGER_THRESHOLD)),
+                "Cobertura (%)": st.session_state.get("sim_coverage", 70),
+                "Loading": st.session_state.get("sim_loading", 0.30),
+            }
+            st.session_state["trigger_threshold"] = threshold
+            st.session_state["sim_coverage"] = coverage
+            st.session_state["sim_loading"] = loading_factor
+            st.success(f"Umbral operativo actualizado a {threshold}%")
+
+    with btn2:
+        compare_clicked = st.button("Comparar configuraciones", use_container_width=True)
+
+    if compare_clicked:
+        prev = st.session_state.get("prev_config")
+        if prev is None:
+            st.info("Aplica primero una configuracion para poder comparar con la siguiente.")
+        else:
+            curr = {
+                "Umbral (%)": threshold,
+                "Cobertura (%)": coverage,
+                "Loading": loading_factor,
+            }
+            curr["Recall"] = f"{recall*100:.0f}%" if recall is not None else "---"
+            curr["BR (pp)"] = f"{br_pp:.1f}"
+            curr["Prima (USD/ha)"] = f"{premium_usd_ha:.0f}"
+            curr["Prima/ingreso"] = f"{premium_pct_income:.1f}%"
+
+            prev_thr = prev["Umbral (%)"]
+            prev_cov = prev["Cobertura (%)"]
+            prev_load = prev["Loading"]
+            bt_prev = bt_all[bt_all["umbral_pct"] == prev_thr].copy()
+            if depto_option != "Promedio":
+                bt_prev = bt_prev[bt_prev["departamento"] == depto_option]
+            if not bt_prev.empty:
+                cov_p = prev_cov / 100.0
+                bt_prev["pago_adj_pp"] = bt_prev["pago_pp"] * cov_p
+                bt_prev["br_adj"] = bt_prev["pago_adj_pp"] + bt_prev["perdida_real_pct"]
+                p_n_ev = int(bt_prev["evento_real"].sum())
+                p_tp = int((bt_prev["evento_real"] & bt_prev["trigger_activado"]).sum())
+                p_recall = p_tp / p_n_ev if p_n_ev > 0 else 0
+                p_active = bt_prev["evento_real"] | bt_prev["trigger_activado"]
+                p_br = bt_prev.loc[p_active, "br_adj"].abs().mean() if p_active.sum() > 0 else 0
+                p_pp = bt_prev["pago_adj_pp"].mean() * (1 + prev_load)
+                p_yield = bt_prev["rendimiento_t_ha"].mean()
+                p_price = bt_prev["precio_ico_usd_ton"].mean()
+                p_usd = p_pp / 100 * p_yield * p_price if p_yield > 0 else 0
+                p_gross = p_yield * p_price
+                p_pct = (p_usd / p_gross * 100) if p_gross > 0 else 0
+                prev["Recall"] = f"{p_recall*100:.0f}%"
+                prev["BR (pp)"] = f"{p_br:.1f}"
+                prev["Prima (USD/ha)"] = f"{p_usd:.0f}"
+                prev["Prima/ingreso"] = f"{p_pct:.1f}%"
+            else:
+                prev["Recall"] = "---"
+                prev["BR (pp)"] = "---"
+                prev["Prima (USD/ha)"] = "---"
+                prev["Prima/ingreso"] = "---"
+
+            cmp_df = pd.DataFrame({"Metrica": list(curr.keys()), "Anterior": [prev.get(k, "---") for k in curr], "Actual": list(curr.values())})
+            st.markdown('<div class="section-label" style="margin-top:12px;">Comparacion de configuraciones</div>', unsafe_allow_html=True)
+            st.dataframe(cmp_df, use_container_width=True, hide_index=True)

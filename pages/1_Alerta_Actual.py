@@ -14,10 +14,11 @@ from utils.defaults import (
     VARIABLE_RANGES, TECHNICAL_VARIABLE_RANGES,
     DEFAULT_DEPARTMENT, DEFAULT_YEAR,
     DETECTOR_THRESHOLD, TRIGGER_THRESHOLD, MODEL_MAE_ANNUAL,
+    MODEL_MAE_MONTHLY_ANNUALIZED,
 )
-from utils.formatters import fmt_pct, fmt_pp, level_from_api, freshness_level
+from utils.formatters import fmt_pct, fmt_pp, level_from_api, level_from_score, freshness_level
 from utils.validators import validate_annual_payload
-from utils.api_client import predict_annual, get_health_full
+from utils.api_client import predict_annual, get_health_full, get_monthly_history
 from components.semaphore import render_semaphore
 from components.metric_card import render_kpi_card, render_trigger_card
 
@@ -43,8 +44,24 @@ st.markdown(
 )
 
 department = st.session_state.get("department", DEFAULT_DEPARTMENT)
-year       = st.session_state.get("year", DEFAULT_YEAR)
-mode       = st.session_state.get("mode", "Básico")
+
+# ─── Page-level controls: year & mode ────────────────────────────────────────
+ctrl_yr, ctrl_mode, _ = st.columns([1, 1, 3])
+with ctrl_yr:
+    year = st.slider(
+        "Año de análisis",
+        min_value=2007, max_value=2024,
+        step=1, key="year",
+        help="Año para la evaluación anual de riesgo",
+    )
+with ctrl_mode:
+    mode = st.radio(
+        "Modo de análisis",
+        options=["Básico", "Técnico"],
+        key="mode",
+        horizontal=True,
+        help="Básico: 10 variables climáticas. Técnico: +7 satelitales (MODIS/TerraClimate).",
+    )
 
 # ─── Layout ───────────────────────────────────────────────────────────────────
 hero_col, inputs_col = st.columns([1, 2], gap="large")
@@ -117,6 +134,37 @@ with hero_col:
     current_month = datetime.now().month
     if current_month in {4, 5, 6, 10, 11, 12}:
         st.info("Temporada de cosecha activa -- M4 (modelo mensual) en alta confianza.")
+
+    # Monthly M4 score for current context
+    current_year = datetime.now().year
+    if year >= current_year - 1:
+        hist_m4 = get_monthly_history(department)
+        if hist_m4["ok"] and hist_m4["data"]:
+            import pandas as _pd
+            _mdf = _pd.DataFrame(hist_m4["data"])
+            _mdf = _mdf.dropna(subset=["score_m4"])
+            if not _mdf.empty:
+                _mdf = _mdf.sort_values(["anio", "mes"])
+                _latest = _mdf.iloc[-1]
+                _score = _latest["score_m4"]
+                _mes_names = {1:"Ene",2:"Feb",3:"Mar",4:"Abr",5:"May",6:"Jun",
+                              7:"Jul",8:"Ago",9:"Sep",10:"Oct",11:"Nov",12:"Dic"}
+                _mes_label = _mes_names.get(int(_latest["mes"]), "?")
+                _trend_ctx = ""
+                if len(_mdf) >= 2:
+                    _prev = _mdf.iloc[-2]["score_m4"]
+                    _delta = _score - _prev
+                    _trend_ctx = f" | tendencia: {_delta:+.1f} pp vs mes anterior"
+                st.markdown(
+                    render_kpi_card(
+                        label=f"Score M4 — {_mes_label} {int(_latest['anio'])}",
+                        value=fmt_pct(_score),
+                        context=f"MAE anualizado: {MODEL_MAE_MONTHLY_ANNUALIZED} pp{_trend_ctx}",
+                        level=level_from_score(_score),
+                        tooltip="Ultimo score mensual disponible del modelo M4 (HGB lags cosecha)",
+                    ),
+                    unsafe_allow_html=True,
+                )
 
     # Data freshness indicator
     health_data = get_health_full()
@@ -191,7 +239,7 @@ with inputs_col:
     else:
         with st.expander("Variables satelitales adicionales — Modo Técnico", expanded=False):
             st.caption(
-                "Activa **Modo Técnico** (panel izquierdo → Modo de análisis) para editar "
+                "Activa **Modo Técnico** (selector arriba) para editar "
                 "estas 7 variables de MODIS y TerraClimate. "
                 "En modo básico se usan los valores por defecto, que son suficientes para la evaluación estándar."
             )

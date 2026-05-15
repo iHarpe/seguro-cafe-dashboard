@@ -243,8 +243,8 @@ def plot_historical_triple(df: pd.DataFrame) -> go.Figure:
     layout = dict(**_LAYOUT_BASE)
     layout["barmode"] = "group"
     layout["yaxis"] = dict(**_LAYOUT_BASE["yaxis"], ticksuffix=" pp", title="Puntos porcentuales")
-    layout["xaxis"] = dict(**_LAYOUT_BASE["xaxis"], title="Ano", dtick=1)
-    layout["title"] = dict(text="Comparacion: Pago del seguro vs Perdida real", font=dict(size=14, color="#1E293B"))
+    layout["xaxis"] = dict(**_LAYOUT_BASE["xaxis"], title="Año", dtick=1)
+    layout["title"] = dict(text="Comparación: Pago del seguro vs Pérdida real", font=dict(size=14, color="#1E293B"))
     fig.update_layout(**layout)
     return fig
 

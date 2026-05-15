@@ -53,8 +53,8 @@ _NAV_ITEMS = [
     ("/Monitoreo_Mensual", _SVG_CHART, "#16A34A", "#F0FDF4", "Monitoreo Mensual"),
     ("/Historico",         _SVG_HIST,  "#D97706", "#FFF7ED", "Análisis Histórico"),
     ("/Simulador",         _SVG_SCEN,  "#7C3AED", "#F5F3FF", "Simulador Actuarial"),
-    ("/Metodologia",       _SVG_BOOK,  "#0891B2", "#ECFEFF", "Metodología"),
     ("/Score_Mensual",     _SVG_PULSE, "#BE185D", "#FDF2F8", "Score Mensual"),
+    ("/Metodologia",       _SVG_BOOK,  "#0891B2", "#ECFEFF", "Metodología"),
 ]
 
 
@@ -125,20 +125,6 @@ def render_sidebar() -> bool:
             key="department",
             help="Departamento caficultor a analizar",
         )
-        st.slider(
-            "Año de análisis",
-            min_value=2007, max_value=2024,
-            step=1, key="year",
-        )
-        st.radio(
-            "Modo de análisis",
-            options=["Básico", "Técnico"],
-            key="mode",
-            help=(
-                "Básico: 10 variables climáticas siempre disponibles.  \n"
-                "Técnico: +7 variables satelitales adicionales (MODIS/TerraClimate)."
-            ),
-        )
 
         # ─── API status ───────────────────────────────────────────────────────
         st.markdown(
@@ -163,7 +149,7 @@ def render_sidebar() -> bool:
             st.caption("Ejecuta en otra terminal:  \n`uvicorn src.api.main:app --port 8000`")
 
         st.markdown(
-            '<div class="sidebar-footer">Seguro Agrícola Indexado · MIAD</div>',
+            '<div class="sidebar-footer">Seguro Agrícola Indexado</div>',
             unsafe_allow_html=True,
         )
 
