@@ -1,90 +1,66 @@
-# Seguro Cafetero — Dashboard Analítico
+# seguro-cafe-dashboard
 
-Dashboard de análisis de riesgo para el **Seguro Agrícola Indexado Cafetero** de Colombia. Conecta con la API `seguro-cafe-api` para visualizar predicciones de pérdida, monitorear cosechas y explorar el histórico de pagos del seguro paramétrico.
+Dashboard Streamlit para análisis de riesgo del Seguro Agrícola Indexado Cafetero (Risaralda y Cundinamarca, Colombia). Consume la API [`seguro-cafe-api`](https://github.com/iHarpe/seguro-cafe-api).
 
-## Pantallas
-
-| Pantalla | Descripción |
-|---|---|
-| **1 — Evaluación de Riesgo Anual** | Ingresa variables climáticas anuales → obtiene pérdida estimada + nivel de riesgo (semáforo) |
-| **2 — Monitoreo Mensual** | Seguimiento mensual durante la cosecha para detección temprana |
-| **3 — Análisis Histórico** | Backtesting 2007–2024: frecuencia de trigger, basis risk promedio, descarga CSV |
-| **4 — Escenarios What-If** | Sliders de variables → análisis de sensibilidad con gráfico tornado |
-
-## Requisitos
-
-- Python 3.11+
-- [`seguro-cafe-api`](https://github.com/iHarpe/seguro-cafe-api) corriendo en `localhost:8000`
-
-## Instalación
+## Inicio rápido
 
 ```bash
-# 1. Clonar
-git clone https://github.com/iHarpe/seguro-cafe-dashboard
-cd seguro-cafe-dashboard
-
-# 2. Entorno virtual
-python -m venv .venv
-.venv\Scripts\activate      # Windows
-# source .venv/bin/activate # Linux/Mac
-
-# 3. Dependencias
+# Requiere seguro-cafe-api corriendo en localhost:8000
+cp .env.example .env
 pip install -r requirements.txt
-
-# 4. Variables de entorno
-copy .env.example .env      # Windows
-# cp .env.example .env      # Linux/Mac
+streamlit run app.py
 ```
 
-## Configuración `.env`
+Dashboard: http://localhost:8501
+
+## Variables de entorno
 
 ```
 API_BASE_URL=http://localhost:8000
 API_KEY=dev-key-local
 ```
 
-## Ejecución
+## Páginas
 
-```bash
-# Terminal 1: API
-cd ../seguro-cafe-api
-uvicorn src.api.main:app --reload --port 8000
+| # | Archivo | Descripción |
+|---|---|---|
+| 1 | `1_Alerta_Actual.py` | Evaluación anual: formulario climático + semáforo de riesgo + KPIs |
+| 2 | `2_Monitoreo_Mensual.py` | Monitoreo mensual de cosecha con detección temprana (M4) |
+| 3 | `3_Historico.py` | Backtesting 2007-2024: frecuencia trigger, basis risk, descarga CSV |
+| 4 | `4_Simulador.py` | Simulador actuarial: umbral, cobertura, loading, comparar configs |
+| 5 | `5_Metodologia.py` | Documentación técnica: arquitectura, correlaciones, desempeño, ROC, datos, pipeline |
+| 6 | `6_Score_Mensual.py` | Trayectoria histórica del score M4 + KPIs + tabla últimos 12 meses |
 
-# Terminal 2: Dashboard
-cd ../seguro-cafe-dashboard
-python -m streamlit run app.py
-# → http://localhost:8501
-```
-
-## Arquitectura
+## Estructura
 
 ```
-app.py                     # Entry point: CSS global + sidebar compartido
-pages/
-  1_Alerta_Actual.py       # Semáforo + KPIs + inputs anuales
-  2_Monitoreo_Mensual.py   # Inputs mensuales + gráfico cosecha
-  3_Historico.py           # Backtesting + tabla + descarga CSV
-  4_Escenarios.py          # Sliders + tornado de sensibilidad
+app.py                         # Entry point + home + nav cards
+pages/                         # 6 páginas Streamlit
 components/
-  semaphore.py             # HTML del círculo semáforo
-  metric_card.py           # Tarjetas KPI con borde de color
-  charts.py                # Gráficos Plotly reutilizables
-  disclaimer.py            # Banner de advertencia del modelo
+  charts.py                    # Gráficos Plotly reutilizables
+  metric_card.py               # Tarjetas KPI
+  semaphore.py                 # Semáforo visual de riesgo
+  sidebar.py                   # Navegación + config global
+  disclaimer.py                # Disclaimer legal
 utils/
-  api_client.py            # Único punto de llamadas HTTP
-  defaults.py              # Rangos de variables y constantes
-  formatters.py            # Funciones de formato puras
-  validators.py            # Validación de inputs antes de la API
-assets/
-  style.css                # Overrides CSS de Streamlit
+  api_client.py                # Wrapper HTTP (9 endpoints)
+  defaults.py                  # Umbrales, MAE, rangos de variables
+  formatters.py                # Formato de porcentajes, niveles
+  validators.py                # Validación de inputs pre-API
+assets/style.css               # CSS global
 ```
 
-## Modelos
+## Modelos (vía API)
 
 | Uso | Algoritmo | MAE test |
 |---|---|---|
-| Pérdida anual (magnitud) | XGBoost | 9.63 pp |
-| Detector + Trigger anual | HGB Set A | — |
-| Alerta mensual | HGB lags cosecha | 11.08 pp (anualizado) |
+| Pérdida anual (M1) | XGBoost | 9.63 pp |
+| Detector + Trigger (M2/M3) | HGB Set A | — |
+| Alerta mensual (M4) | HGB lags cosecha | 11.08 pp |
 
-Umbrales: Detector −2.8% · Trigger −14.0%
+Umbrales: Detector -2.8% / Trigger -14.0%
+
+## Requisitos
+
+- Python 3.11+
+- [`seguro-cafe-api`](https://github.com/iHarpe/seguro-cafe-api) corriendo localmente
