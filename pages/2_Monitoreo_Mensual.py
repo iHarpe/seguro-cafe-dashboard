@@ -131,7 +131,8 @@ if year > CURRENT_YEAR:
 st.markdown('<div class="section-label">Registros mensuales (meses de cosecha)</div>', unsafe_allow_html=True)
 st.info(
     "El modelo requiere **mínimo 3 meses**. Meses de cosecha: "
-    "**Abr–Jun** (cosecha grande) y **Oct–Dic** (mitaca).",
+    "**Abr–Jun** (cosecha grande) y **Oct–Dic** (mitaca). "
+    "Para resultados realistas, ajuste NDVI y EVI a valores observados en la zona.",
     icon="ℹ️",
 )
 
@@ -166,6 +167,16 @@ with st.form("monthly_input_form"):
                     "Déficit hídrico (mm)", min_value=0.0, max_value=None,
                     value=10.0, step=1.0, key=f"m_def_{month}",
                 )
+                ndvi_abs = st.number_input(
+                    "NDVI (absoluto)", min_value=0.0, max_value=1.0,
+                    value=0.55, step=0.01, key=f"m_ndvi_abs_{month}",
+                    help="Indice de vegetacion NDVI (MODIS). Normal: 0.50–0.65. Estres: < 0.45",
+                )
+                evi_abs = st.number_input(
+                    "EVI (absoluto)", min_value=0.0, max_value=1.0,
+                    value=0.45, step=0.01, key=f"m_evi_abs_{month}",
+                    help="Indice de vegetacion EVI (MODIS). Normal: 0.40–0.55. Estres: < 0.38",
+                )
 
                 records.append({
                     "departamento": department,
@@ -181,8 +192,8 @@ with st.form("monthly_input_form"):
                     "temp_aire_C": temp,
                     "def": deficit,
                     "GDD_cafe": 7.8,
-                    "NDVI": 0.65,
-                    "EVI": 0.55,
+                    "NDVI": ndvi_abs,
+                    "EVI": evi_abs,
                     "Gpp": 1.8,
                     "NDVI_anomalia_pct": ndvi_a,
                     "EVI_anomalia_pct": 0.0,
