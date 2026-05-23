@@ -389,7 +389,7 @@ with tab_pipe:
 
     st.markdown("""
 **Pipeline de reentrenamiento:**
-1. `run_pipeline.py` lee los datasets CSV de `PROYECTO_V2/BASE_DE_DATOS/FINALES/`
+1. `run_pipeline.py` lee los datasets CSV de `./insumos/data`
 2. Entrena 3 modelos: XGBoost magnitud, HGB detector+trigger, HGB mensual
 3. Genera 4 artefactos: backtest, OOF, historial mensual, correlaciones
 4. Serializa modelos y metadata a `insumos/models/`
